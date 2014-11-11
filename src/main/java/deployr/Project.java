@@ -2,6 +2,7 @@ package deployr;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -20,10 +21,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class Project {
-	private List<String> remotes;
+	private Map<String, Remote> remotes;
+	private List<Site> sites;
 	private String folder;
 	private String configFile;
 	private String projectName;
+	
 	/**
 	 * Constructs a Project object that represents a deployr-enabled project on disk.
 	 * Note that folder must already contain a configured deployr.xml, to create a new 
@@ -63,7 +66,9 @@ public class Project {
 	 
 			// staff elements
 			Element site = doc.createElement("site");
+			site.setAttribute("lang","php");
 			rootElement.appendChild(site);
+			
 	 
 //			// set attribute to staff element
 //			Attr attr = doc.createAttribute("id");
@@ -82,14 +87,14 @@ public class Project {
 			site.appendChild(path);
 	 
 			// php elements
-			Element language = doc.createElement("php");
-			language.setAttribute("usecomposer","true");
-			site.appendChild(language);
+			Element composer = doc.createElement("usecomposer");
+			site.appendChild(composer	);
 			
 			Element remote = doc.createElement("remote");
-			
+					
+			remote.setAttribute("name","production");
 			Element server = doc.createElement("ssh_server");
-			server.appendChild(doc.createTextNode("pglf-prod"));
+			server.appendChild(doc.createTextNode("production.example.com"));
 			remote.appendChild(server);
 			Element document_root = doc.createElement("document_root");
 			document_root.appendChild(doc.createTextNode("/var/www/"+projectName));
@@ -112,7 +117,7 @@ public class Project {
 			transformer.transform(source, result);
 	 
 			
-			System.out.println("File saved!");
+			//System.out.println("File saved!");
 	 
 			return new Project(folder, "deployr.xml");
 					
@@ -122,6 +127,11 @@ public class Project {
 			tfe.printStackTrace();
 		  }
 		return null;
+	}
+	public void push(){
+		for(Site s: sites){
+			s.push();
+		}
 	}
 	private void loadXMLConfig(){
 		try {
@@ -134,8 +144,20 @@ public class Project {
 			//optional, but recommended
 			//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
 			doc.getDocumentElement().normalize();
-		 
-			System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+			
+			if (doc.getDocumentElement().getNodeName() == "deployr"){
+				NodeList remotes = doc.getElementsByTagName("remote");
+				for(int i = 0; i < remotes.getLength(); i++){
+					Remote r = new Remote(remotes.item(i));
+					this.remotes.put(r.getName(), r);
+				}
+				NodeList sites = doc.getElementsByTagName("site");
+				for(int i = 0; i < sites.getLength(); i++){
+					this.sites.add(new Site(sites.item(i),this.remotes));
+				}
+				
+			}
+			//System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 		 
 //			NodeList nList = doc.getElementsByTagName("staff");
 //		 

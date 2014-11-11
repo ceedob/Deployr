@@ -86,7 +86,7 @@ public class Deployr {
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		args = new String[]{"deployr", "init", "/Users/chris/Google Drive/Progamming/chrisdobson.ca/" };
+		args = new String[]{"deployr", "push", "/Users/chris/Google Drive/Progamming/chrisdobson.ca/" };
 		Deployr d = new Deployr(args);
 		
 		
